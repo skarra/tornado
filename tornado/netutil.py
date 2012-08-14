@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, with_statement
 import errno
 import logging
 import os
+import platform
 import socket
 import stat
 
@@ -252,7 +253,12 @@ def bind_sockets(port, address=None, family=socket.AF_UNSPEC, backlog=128):
         af, socktype, proto, canonname, sockaddr = res
         sock = socket.socket(af, socktype, proto)
         set_close_exec(sock.fileno())
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        ## The semantics of SO_REUSEADDR is very different from what is
+        ## actually specified and implemented on various Unix flavours.
+        if platform.system() != 'Windows':
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
         if af == socket.AF_INET6:
             # On linux, ipv6 sockets accept ipv4 too by default,
             # but this makes it impossible to bind to both
